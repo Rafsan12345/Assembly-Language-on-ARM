@@ -1,0 +1,36 @@
+#include <stdint.h>
+
+/* Base addresses */
+#define RCC_BASE    0x40021000
+#define GPIOC_BASE  0x40011000
+
+/* RCC registers */
+#define RCC_APB2ENR (*(volatile uint32_t*)(RCC_BASE + 0x18))
+#define IOPCEN      (1 << 4)  // Enable GPIOC clock
+
+/* GPIOC registers */
+#define GPIOC_CRH   (*(volatile uint32_t*)(GPIOC_BASE + 0x04))
+#define GPIOC_ODR   (*(volatile uint32_t*)(GPIOC_BASE + 0x0C))
+#define PC13        13        // On-board LED
+
+void delay(volatile uint32_t count) {
+    while(count--) { __asm__("nop"); }
+}
+
+int main(void) {
+    /* 1. Enable GPIOC clock */
+    RCC_APB2ENR |= IOPCEN;
+
+    /* 2. Configure PC13 as output push-pull, max speed 2 MHz */
+    GPIOC_CRH &= ~(0xF << 20);   // clear CNF+MODE for PC13
+    GPIOC_CRH |=  (0x1 << 20);   // MODE13[1:0] = 01 → output 10 MHz (2 MHz works too)
+                                 // CNF13[1:0] = 00 → General purpose output push-pull
+
+    while(1) {
+        /* Toggle PC13 */
+        GPIOC_ODR ^= (1 << PC13);
+
+        /* Simple delay */
+        delay(500000);
+    }
+}
