@@ -1,0 +1,34 @@
+/* LED_BLINK - DE1-SoC (ARMv7) assembly
+   কাজ: LEDR9..0 ব্লিঙ্ক করাও (LEDR base 0xFF200000)
+   CPUlator এ পেস্ট করে চালান।
+*/
+        .syntax unified
+        .text
+        .global _start
+
+.equ LEDR_ADDR, 0xFF200000
+
+_start:
+        /* রেজিস্টার ইন্টারপ্রেটেশন: R0..R3 ব্যবহার করা হয়েছে */
+loop:
+        /* LED pattern: সবগুলো LED অন */
+        LDR     R0, =LEDR_ADDR
+        MOV     R1, #0x3FF        /* 10-bit mask -> all 10 LEDs ON */
+        STR     R1, [R0]
+
+        BL      delay_short
+
+        /* সব LED বন্ধ */
+        MOV     R1, #0x0
+        STR     R1, [R0]
+
+        BL      delay_short
+        B       loop
+
+/* সফটওয়্যার delay (simple busy-loop) */
+delay_short:
+        PUSH    {LR}
+        MOV     R2, #0x00400000   /* পরিবর্তন করে দ্রুত/নিম্ন গতি নিয়ন্ত্রণ করুন */
+1:      SUBS    R2, R2, #1
+        BNE     1b
+        POP     {PC}

@@ -1,0 +1,7 @@
+.global _start
+.equ SSEG,0xFF200020
+_start:
+	LDR R1,=SSEG 
+	MOV R2,#0x6D
+	STR R2,[R1]
+	

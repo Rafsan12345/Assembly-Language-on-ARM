@@ -1,0 +1,17 @@
+/* UART_ECHO (simplified) - CPUlator provides a terminal device.
+   CPUlator's ARM system may map a UART device to a simulation console.
+   This example demonstrates polling-style I/O using semihosting-like routines.
+   NOTE: On CPUlator use the built-in terminal (or use semihosting syscalls).
+*/
+        .syntax unified
+        .text
+        .global _start
+
+_start:
+        /* এখানে আমরা সোজা semihosting ছাড়াই দেখাই: একটি নমুনা loop
+           CPUlator terminal ব্যবহার করে ইনপুট নেয়া আলাদা syscall প্রয়োগ করতে হবে।
+           তাই এ কোডটি একটি template / কাজের রূপরেখা হিসেবে দেখুন। */
+        B       .
+
+/* বাস্তবে CPUlator assembly-তে getchar/putchar নানা উপায়ে করা হয়;
+   StackOverflow ও CPUlator ডক-এ উদাহরণ আছে। */

@@ -1,0 +1,7 @@
+.global _start
+.equ LED,0xFF200000
+_start:
+	LDR R1,=LED 
+	MOV R2,#1
+	STR R2,[R1]
+	

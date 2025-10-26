@@ -1,0 +1,16 @@
+/* I2C_EXAMPLE - Template for I2C master access
+   DE1-SoC এ I2C peripheral থাকতে পারে; FPGA-এ IP লাগবে।
+   এখানে কেবল memory-mapped register access রূপরেখা দেয়া হলো।
+*/
+        .syntax unified
+        .text
+        .global _start
+
+.equ I2C_BASE, 0xFF205000    /* উদাহরণগত ঠিকানা; বাস্তবে ডকুমেন্ট চেক করুন */
+
+_start:
+        /* I2C control register-এ START শর্ত লেখার উদাহরণ */
+        LDR     R0, =I2C_BASE
+        MOV     R1, #0x01
+        STR     R1, [R0]          /* START condition (template) */
+        B       .

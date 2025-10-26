@@ -1,0 +1,22 @@
+.syntax unified
+.text
+.global _start
+
+.equ UART0_BASE, 0xFF201000
+.equ THR, 0x00
+.equ LSR, 0x14
+.equ LSR_THRE, 0x20      @ bit 5: Transmitter empty
+
+_start:
+    LDR R0, =UART0_BASE
+    MOV R1, #'A'           @ ASCII 'A' to send
+
+wait_empty:
+    LDR R2, [R0, #LSR]     @ read LSR
+    TST R2, #LSR_THRE
+    BEQ wait_empty          @ wait until transmitter empty
+
+    STRB R1, [R0, #THR]    @ send 'A'
+
+done:
+    B done                  @ infinite loop

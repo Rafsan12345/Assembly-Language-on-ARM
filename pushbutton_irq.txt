@@ -1,0 +1,23 @@
+/* PUSHBUTTON_IRQ - Interrupt handling outline (CPUlator supports some IRQ simulation)
+   এই ফাইলটি IRQ দিয়ে প্রদর্শন করার রূপরেখা; CPUlator-এ সম্পূর্ণ IRQ কনফিগ্রি ভিন্ন হতে পারে.
+*/
+        .syntax unified
+        .text
+        .global _start
+
+_start:
+        /* একটি সরল লুপ যা পুশবাটন চেক করে; সত্যিকার IRQ ব্যবহারের জন্য
+           CPUlator ডকুমেন্টেশন অনুসরণ করে NVIC/IRQ এনাবল করতে হবে */
+main_loop:
+        BL      read_keys
+        BL      delay_short
+        B       main_loop
+
+/* KEYs পঠন - KEY base 0xFF200050 (see manual) */
+.equ KEY_BASE, 0xFF200050
+read_keys:
+        PUSH    {LR}
+        LDR     R0, =KEY_BASE
+        LDR     R1, [R0]
+        /* R1 এর মান ব্যবহার করে প্রয়োজনীয় কাজ করান */
+        POP     {PC}

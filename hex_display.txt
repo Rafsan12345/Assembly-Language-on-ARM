@@ -1,0 +1,18 @@
+/* HEX_DISPLAY - 7-segment display example
+   HEX0..3 base: 0xFF200020
+   প্রতিটি HEX 7-seg মান সরাসরি 7-bit positional mapping ধরুন (সাধারণ উদাহরণ)
+*/
+        .syntax unified
+        .text
+        .global _start
+
+.equ HEX0, 0xFF200020
+
+_start:
+        LDR     R0, =HEX0
+        /* উদাহরণ: HEX0-এ '0' (segments a..g pattern) - এখানে সরাসরি নমুনা মান ব্যবহার */
+        MOV     R1, #0x3F        /* সাধারণ 7-seg '0' mapping (0b00111111) */
+        STR     R1, [R0]
+        B       .
+
+/* ব্যবহারিকভাবে 7-seg মাপিং পরিবর্তন করে অনেক ডিজিট দেখানো যায় */

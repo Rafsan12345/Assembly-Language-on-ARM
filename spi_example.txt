@@ -1,0 +1,19 @@
+/* SPI_EXAMPLE - Template for SPI register access (FPGA-side IP required)
+   CPUlator may simulate SPI only if system image includes that device.
+   এটা একটি রূপরেখা: memory-mapped SPI control/status/data registers-এ read/write দেখানো।
+*/
+        .syntax unified
+        .text
+        .global _start
+
+.equ SPI_BASE, 0xFF204000    /* উদাহরণগত ঠিকানা; বাস্তবে পোর্ট ম্যাপিং চেক করুন */
+
+_start:
+        LDR     R0, =SPI_BASE
+        /* SPI ডেটা রেজিস্টার (offset 0x0) তে লিখি */
+        MOV     R1, #0x55
+        STRB    R1, [R0]          /* লিখুন (byte) */
+
+        /* status পড়া (offset 0x4) */
+        LDR     R2, [R0, #4]
+        B       .

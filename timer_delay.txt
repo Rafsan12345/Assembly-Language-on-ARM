@@ -1,0 +1,19 @@
+/* TIMER_DELAY - Template showing use of an on-chip timer (সিমুলেটেড)
+   নোট: CPUlator-এ নির্দিষ্ট timer registers হতে পারে না; এই ফাইলটি নির্দেশিকা হিসেবে।
+   বাস্তবে DE1-SoC user manual এ timer-এর ঠিকানা ও বর্ণনা আছে।
+*/
+        .syntax unified
+        .text
+        .global _start
+
+_start:
+        /* সহজ busy-loop delay ব্যবহার করবো (হার্ডওয়্যার timer না-থাকলে) */
+        BL      delay_long
+        B       .
+
+delay_long:
+        PUSH    {LR}
+        MOV     R3, #0x02000000
+t1:     SUBS    R3, R3, #1
+        BNE     t1
+        POP     {PC}

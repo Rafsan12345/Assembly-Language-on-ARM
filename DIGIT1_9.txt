@@ -1,0 +1,62 @@
+
+	/* MULTI_HEX_DISPLAY - Show 0~9 counting on HEX0..HEX3
+   Works on: https://cpulator.01xz.net/?sys=arm-de1soc
+   Base address HEX0..3 = 0xFF200020
+*/
+
+        .syntax unified
+        .text
+        .global _start
+
+.equ HEX0_3, 0xFF200020
+
+/* 7-segment patterns for digits 0-9
+   (bit order: gfedcba; 0 = segment on)
+*/
+digits:
+        .word 0x3F  /* 0 */
+        .word 0x06  /* 1 */
+        .word 0x5B  /* 2 */
+        .word 0x4F  /* 3 */
+        .word 0x66  /* 4 */
+        .word 0x6D  /* 5 */
+        .word 0x7D  /* 6 */
+        .word 0x07  /* 7 */
+        .word 0x7F  /* 8 */
+        .word 0x6F  /* 9 */
+
+_start:
+        LDR     R6, =HEX0_3        /* base addr */
+        LDR     R7, =digits        /* lookup table base */
+
+main_loop:
+        MOV     R0, #0             /* digit counter 0–9 */
+
+count_loop:
+        /* Load pattern for this digit */
+        LDR     R1, [R7, R0, LSL #2]
+
+        /* Duplicate same pattern to 4 HEX digits (HEX0..HEX3) */
+        /* Combine into 32-bit value: same byte repeated 4 times */
+        MOV     R2, R1
+        ORR     R2, R2, R1, LSL #8
+        ORR     R2, R2, R1, LSL #16
+        ORR     R2, R2, R1, LSL #24
+
+        STR     R2, [R6]           /* write to HEX display */
+
+        BL      delay_loop
+
+        ADD     R0, R0, #1
+        CMP     R0, #10
+        BLT     count_loop
+
+        B       main_loop
+
+/* Simple software delay */
+delay_loop:
+        PUSH    {LR}
+        MOV     R3, #0x300000
+1:      SUBS    R3, R3, #1
+        BNE     1b
+        POP     {PC}

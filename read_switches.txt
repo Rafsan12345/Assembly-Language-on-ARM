@@ -1,0 +1,28 @@
+/* READ_SWITCHES - read slider switches and display on LEDs
+   SW base: 0xFF200040 ; LED base: 0xFF200000
+*/
+        .syntax unified
+        .text
+        .global _start
+
+.equ LEDR, 0xFF200000
+.equ SW,   0xFF200040
+
+_start:
+        LDR     R1, =SW
+        LDR     R2, [R1]         /* R2 has switch bits (bottom 10 bits) */
+
+        /* সরাসরি LED-এ লিখি */
+        LDR     R0, =LEDR
+        STR     R2, [R0]
+
+wait:
+        BL      delay_short
+        B       _start
+
+delay_short:
+        PUSH    {LR}
+        MOV     R3, #0x00100000
+d1:     SUBS    R3, R3, #1
+        BNE     d1
+        POP     {PC}

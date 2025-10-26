@@ -1,0 +1,9 @@
+.global _start
+_start:
+	MOV R1,#5
+	MOV R2,#5000
+	
+	PUSH {R1,R2}
+	
+	STR R2,[R1]
+	
