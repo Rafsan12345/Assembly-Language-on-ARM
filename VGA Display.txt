@@ -1,0 +1,219 @@
+@ === 1. DE1-SoC VGA Base Addresses and Constants ===
+
+    .equ PIXEL_BUFFER_BASE, 0xC8000000 @ ARM HPS Pixel Buffer Address
+    .equ CHAR_BUFFER_BASE,  0xC9000000 @ ARM HPS Character Buffer Address
+
+    .equ PIXEL_WIDTH,       320        @ Screen resolution width (X max)
+    .equ PIXEL_HEIGHT,      240        @ Screen resolution height (Y max)
+    .equ MEMORY_PITCH,      1024       @ Bytes per row for pixel buffer (Y multiplier)
+    .equ CHAR_PITCH,        128        @ Bytes per character row
+
+    @ 16-bit R5G6B5 Color Values
+    .equ CYAN,              0x07FF     @ 0b00000 111111 11111 (Max Green + Max Blue)
+    .equ YELLOW,            0xFFE0     @ 0b11111 111111 00000 (Max Red + Max Green)
+    .equ BORDER_THICKNESS,  5          @ Thickness of the border in pixels
+
+
+    @ === 2. Program Entry Point ===
+    .global _start
+_start:
+    @ R4 = Pixel Buffer Base (Graphics)
+    LDR R4, =PIXEL_BUFFER_BASE
+    
+    @ R9 = Character Buffer Base (Text)
+    LDR R9, =CHAR_BUFFER_BASE
+
+
+    @ --- Part 1: Clear Entire Screen to CYAN ---
+    @ R5 = CYAN color for clearing
+    MOV R5, #CYAN
+    
+    MOV R1, #0  @ R1 = Current Y (0 to 239)
+Y_Clear_Loop:
+    CMP R1, #PIXEL_HEIGHT
+    BGE Draw_Border
+    
+    LSL R6, R1, #10 @ R6 = Y * 1024 (Y Offset)
+    
+    MOV R0, #0  @ R0 = Current X (0 to 319)
+X_Clear_Loop:
+        CMP R0, #PIXEL_WIDTH
+        BGE next_clear_y
+
+        @ Address Calculation: (Base + (Y*1024) + (X*2))
+        LSL R7, R0, #1      @ R7 = X * 2 (X Offset)
+        ADD R3, R6, R7      @ R3 = Total Offset
+        ADD R8, R4, R3      @ R8 = Final Pixel Address
+        
+        STRH R5, [R8]       @ Store CYAN
+        
+        ADD R0, R0, #1
+        B X_Clear_Loop
+        
+next_clear_y:
+    ADD R1, R1, #1
+    B Y_Clear_Loop
+
+
+    @ --- Part 2: Draw a Thick YELLOW Border (Graphic/Image) ---
+Draw_Border:
+    @ R5 = YELLOW color for border
+    MOV R5, #YELLOW
+    
+    @ R1 = Loop counter for Y-coordinates
+    MOV R1, #0
+    
+Border_Y_Loop:
+    CMP R1, #PIXEL_HEIGHT
+    BGE Display_Large_Text
+
+    @ Determine if the current row R1 is within the border thickness at top or bottom
+    CMP R1, #BORDER_THICKNESS
+    BLE Draw_Full_Row       @ If Y < 5 (Top Border), draw full row
+    
+    SUB R3, #PIXEL_HEIGHT, #BORDER_THICKNESS
+    CMP R1, R3
+    BGE Draw_Full_Row       @ If Y >= (240-5) (Bottom Border), draw full row
+    
+    @ If not a full top/bottom row, draw only the left/right parts
+    MOV R0, #0              @ R0 = Current X (starts at 0)
+    B Draw_Column_Loop
+
+Draw_Full_Row:
+    @ This block handles drawing the full YELLOW row (top and bottom border)
+    LSL R6, R1, #10         @ R6 = Y * 1024 (Y Offset)
+    MOV R0, #0              @ Start X at 0
+Full_Row_X_Loop:
+        CMP R0, #PIXEL_WIDTH
+        BGE next_border_y
+
+        LSL R7, R0, #1      @ R7 = X * 2 (X Offset)
+        ADD R3, R6, R7
+        ADD R8, R4, R3      @ R8 = Final Pixel Address
+        
+        STRH R5, [R8]       @ Store YELLOW
+        
+        ADD R0, R0, #1
+        B Full_Row_X_Loop
+
+
+@ Draw only the left and right border segments for non-full rows
+Draw_Column_Loop:
+    @ --- Left Border ---
+    LSL R6, R1, #10         @ R6 = Y * 1024 (Y Offset)
+    
+    MOV R0, #0              @ X = 0
+Left_Col_Loop:
+        CMP R0, #BORDER_THICKNESS
+        BGE Draw_Right_Column
+
+        LSL R7, R0, #1
+        ADD R3, R6, R7
+        ADD R8, R4, R3
+        STRH R5, [R8]       @ Store YELLOW
+        
+        ADD R0, R0, #1
+        B Left_Col_Loop
+
+    @ --- Right Border ---
+Draw_Right_Column:
+    SUB R0, #PIXEL_WIDTH, #BORDER_THICKNESS @ R0 = Start X for right border (320-5 = 315)
+Right_Col_Loop:
+        CMP R0, #PIXEL_WIDTH
+        BGE next_border_y
+
+        LSL R7, R0, #1
+        ADD R3, R6, R7
+        ADD R8, R4, R3
+        STRH R5, [R8]       @ Store YELLOW
+        
+        ADD R0, R0, #1
+        B Right_Col_Loop
+        
+next_border_y:
+    ADD R1, R1, #1
+    B Border_Y_Loop
+
+
+    @ --- Part 3: Display Large "ARM" Text (2x2 Block Letters) ---
+Display_Large_Text:
+    @ Character Grid: 80 columns x 60 rows. Each letter is 2x2.
+    
+    @ R1 = Starting Y-coordinate (row 25, roughly center of screen)
+    MOV R1, #25 
+    
+    @ R0 = Starting X-coordinate (column 35, roughly center)
+    MOV R0, #35 
+    
+    @ Draw 'A' block
+    MOV R5, #'A'
+    BL Draw_Block_Char
+
+    @ Move X position for 'R'
+    ADD R0, R0, #3          @ Move 2 columns (the size of 'A') + 1 space
+    
+    @ Draw 'R' block
+    MOV R5, #'R'
+    BL Draw_Block_Char
+    
+    @ Move X position for 'M'
+    ADD R0, R0, #3          @ Move 2 columns (the size of 'R') + 1 space
+    
+    @ Draw 'M' block
+    MOV R5, #'M'
+    BL Draw_Block_Char
+    
+    B stop_program
+
+    
+    @ --- Subroutine to Draw a 2x2 Block Character ---
+    @ R5 must contain the ASCII char to draw
+    @ R0/R1 must contain the starting (X, Y) char coordinates
+Draw_Block_Char:
+    PUSH {R0, R1, R2, R3, R6, LR} @ Save registers and return address
+
+    @ R2 = Copy of starting X
+    MOV R2, R0
+    
+    @ R3 = Copy of starting Y
+    MOV R3, R1
+    
+    @ --- Row 1 (Top) ---
+    LSL R6, R1, #7          @ R6 = Y * 128 (Y Offset)
+    
+    @ (X, Y)
+    ADD R8, R9, R6          @ R8 = Base + Y_offset
+    ADD R7, R8, R0          @ R7 = Address (X, Y)
+    STRB R5, [R7]           @ Write char at (X, Y)
+    
+    @ (X+1, Y)
+    ADD R0, R0, #1          @ X + 1
+    ADD R7, R8, R0
+    STRB R5, [R7]           @ Write char at (X+1, Y)
+    
+    @ --- Row 2 (Bottom) ---
+    ADD R1, R1, #1          @ Y + 1
+    LSL R6, R1, #7          @ R6 = (Y+1) * 128 (New Y Offset)
+    
+    @ (X, Y+1) - X is currently (X+1), so reset to R2 (original X)
+    MOV R0, R2              @ Reset X to original X
+    ADD R8, R9, R6
+    ADD R7, R8, R0
+    STRB R5, [R7]           @ Write char at (X, Y+1)
+
+    @ (X+1, Y+1) - X is currently (original X), so increment
+    ADD R0, R0, #1
+    ADD R7, R8, R0
+    STRB R5, [R7]           @ Write char at (X+1, Y+1)
+
+    @ Restore R0 and R1 to the original block coordinates for the next block
+    MOV R0, R2
+    MOV R1, R3
+    
+    POP {R0, R1, R2, R3, R6, LR}
+    BX LR                   @ Return from subroutine
+
+
+    @ === 4. Program End and Data Section ===
+stop_program:
+    B stop_program              @ Infinite loop to halt execution
