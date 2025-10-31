@@ -1,0 +1,22 @@
+    .syntax unified
+    .cpu cortex-m3
+    .thumb
+    .global main
+
+main:
+    MOV r0, #25        @ Dividend (যাকে ভাগ করা হবে)
+    MOV r1, #4         @ Divisor
+    MOV r2, #0         @ Quotient = 0
+
+loop:
+    CMP r0, r1         @ Dividend < Divisor ?
+    BLT done
+    SUB r0, r0, r1     @ Dividend থেকে divisor বিয়োগ
+    ADD r2, r2, #1     @ Quotient++
+    B loop
+
+done:
+    @ r2 = quotient, r0 = remainder
+stop:
+    B stop
+
