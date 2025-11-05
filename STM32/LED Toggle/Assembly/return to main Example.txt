@@ -1,0 +1,16 @@
+.syntax unified
+.cpu cortex-m3
+.thumb
+.global led_toggle_asm
+.thumb_func
+
+led_toggle_asm:
+    @ ... (setup code same as before)
+
+    @ toggle once
+    LDR   R0, =GPIOC_FULL_ODR
+    LDR   R1, [R0]
+    EOR   R1, R1, #(1 << PC13)
+    STR   R1, [R0]
+
+    BX    LR        @ return to main.c
