@@ -1,0 +1,21 @@
+.syntax unified
+.cpu cortex-m3
+.thumb
+.global simple_op         @ C linker-এ public
+.type simple_op, %function
+
+.data
+
+simple_result: .word 0     @ global variable
+A: .space 4
+B: .space 4
+C: .space 4
+D: .space 4
+
+
+simple_op:
+	LDR R0,=A
+	MOV R1,255
+	STR R1,[R0]
+	MOV R0, R1
+	BX lr
